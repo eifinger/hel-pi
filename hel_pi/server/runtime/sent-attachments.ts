@@ -1,4 +1,5 @@
 import { defineEntry, defineExtension, defineTool } from "@earendil-works/pi-durable";
+import { basename } from 'node:path';
 import { Type } from "typebox";
 import type { Message, MessageAttachment } from "../../shared/chat";
 import { AttachmentStore, MAX_ATTACHMENT_BYTES } from "../attachments/store";
@@ -15,19 +16,18 @@ export function sentAttachmentMessage(id: number, value: SentAttachment): Messag
 }
 
 /** Store and publish a snapshot in the current user conversation; no channel-specific delivery. */
-export function createSentAttachmentTools(store: AttachmentStore) {
+export function createSentAttachmentTools(store: AttachmentStore, readArtifact: (path: string) => Uint8Array) {
   const failure = (message: string) => ({ output: [{ type: "text" as const, text: message }], isError: true });
-  const path = Type.String({ minLength: 1, maxLength: 4096, description: "Absolute path to the file." });
+  const path = Type.String({ minLength: 1, maxLength: 1024, description: "Workspace-relative artifact path, e.g. artifacts/report.md." });
   const attachment = defineTool({
     name: "send_attachment", replay: "unsafe",
-    description: "Send a local file as an attachment in the current chat.",
+    description: "Send a snapshot of an artifact (document, image, audio or video) in this chat.",
     parameters: Type.Object({ path }, { additionalProperties: false }),
     execute: async (args, api, context) => {
       const { path } = args;
-      if (!path.startsWith("/")) return failure("An absolute local file path is required.");
-      let saved: Awaited<ReturnType<AttachmentStore["saveSnapshot"]>>;
-      try { saved = await store.saveSnapshot(path); }
-      catch { return failure(`Cannot read or save the file. Ensure it is a regular nonempty file no larger than ${MAX_ATTACHMENT_BYTES / (1024 * 1024)} MiB.`); }
+      let saved: ReturnType<AttachmentStore["saveSnapshotBytes"]>;
+      try { saved = store.saveSnapshotBytes(basename(path), readArtifact(path)); }
+      catch { return failure(`Choose a nonempty supported file under artifacts/ of at most ${MAX_ATTACHMENT_BYTES / (1024 * 1024)} MiB.`); }
       // After a commit is attempted, keep the snapshot on an ambiguous failure: it may already be referenced.
       if (context.abortSignal?.aborted) { await store.discardSnapshot(saved.id); return failure("Attachment publication cancelled."); }
       const data: SentAttachment = { ...saved, createdAt: api.now() };

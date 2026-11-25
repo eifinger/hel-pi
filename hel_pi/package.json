@@ -1,6 +1,6 @@
 {
   "name": "hel-pi",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "license": "MIT",
   "type": "module",
@@ -11,6 +11,7 @@
   "dependencies": {
     "@earendil-works/chord": "1.6.0",
     "@earendil-works/pi-ai": "1.6.0",
+    "@earendil-works/pi-codemode": "1.6.0",
     "@earendil-works/pi-durable": "1.6.0",
     "@earendil-works/pi-mcp": "1.6.0",
     "croner": "11.0.0",

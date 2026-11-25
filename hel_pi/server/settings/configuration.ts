@@ -64,7 +64,7 @@ function syncDirectory(path: string) {
   finally { if (fd !== undefined) closeSync(fd); }
 }
 
-function atomicWrite(path: string, content: string) {
+export function atomicWrite(path: string, content: string) {
   assertRegularOrMissing(path);
   const directory = dirname(path);
   mkdirSync(directory, { recursive: true, mode: 0o700 });

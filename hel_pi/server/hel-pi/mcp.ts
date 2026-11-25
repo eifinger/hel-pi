@@ -1,42 +1,41 @@
 import { McpClient, StreamableHttpTransport, toLlmContent } from '@earendil-works/pi-mcp';
 import { defineTool } from '@earendil-works/pi-durable';
 import { Type } from 'typebox';
+import type { Connections } from './connections';
 import { deadline } from './deadline';
 
-export function mcpTools(endpoint: string, token: string | undefined, allowedNames: string) {
-  const url = URL.parse(endpoint);
-  if (!url || (url.protocol !== 'https:' && !(url.protocol === 'http:' && url.hostname === 'homeassistant')) || url.username || url.password || url.search || url.hash)
-    throw new Error('Use an HTTPS MCP URL, or HTTP on the internal homeassistant host. Set the token separately.');
-  const allowed = new Set(allowedNames.split(',').map(name => name.trim()).filter(Boolean));
+export async function withMcp<T>(url: string, secret: string, signal: AbortSignal | undefined, operation: (client: McpClient, signal: AbortSignal) => Promise<T>) {
+  const client = new McpClient({ name: 'hel-pi', version: '0.2.0', requestTimeoutMs: 15_000 });
+  const limit = deadline(20_000, signal);
+  try {
+    await client.connect(new StreamableHttpTransport({ url, headers: secret ? { Authorization: `Bearer ${secret}` } : {},
+      openGetStream: false, maxMessageBytes: 512_000, reconnect: { maxRetries: 0 },
+      fetch: (input, init) => fetch(input, { ...init, redirect: 'error', signal: init?.signal ? AbortSignal.any([limit, init.signal]) : limit }),
+    }));
+    return await operation(client, limit);
+  } finally { await client.close().catch(() => {}); }
+}
 
-  // Connect on demand: an unavailable HA integration must not block chat or require a Hel-Pi restart.
-  async function session<T>(signal: AbortSignal | undefined, operation: (client: McpClient, signal: AbortSignal) => Promise<T>) {
-    const client = new McpClient({ name: 'hel-pi', version: '0.1.0', requestTimeoutMs: 15_000 });
-    const limit = deadline(20_000, signal);
-    try {
-      await client.connect(new StreamableHttpTransport({ url: endpoint, headers: token ? { Authorization: `Bearer ${token}` } : {},
-        openGetStream: false, maxMessageBytes: 512_000, reconnect: { maxRetries: 0 },
-        fetch: (input, init) => fetch(input, { ...init, redirect: 'error', signal: init?.signal ? AbortSignal.any([limit, init.signal]) : limit }),
-      }));
-      return await operation(client, limit);
-    } catch { throw new Error('MCP request failed. Check the server URL, token and permissions. If an action was sent, its outcome is unknown; do not repeat it automatically.'); }
-    finally { await client.close().catch(() => {}); }
-  }
-  return [defineTool({ name: 'mcp_list', description: 'List tool names on the configured MCP server. Permitted tools include their descriptions and argument schemas.',
-    parameters: Type.Object({}), replay: 'unsafe', async execute(_args, _api, ctx) {
-      const tools = await session(ctx.abortSignal, (client, signal) => client.listTools({ signal }));
-      const catalog = tools.map(({ name, description, inputSchema }) =>
-        allowed.has(name) ? { name, description, inputSchema, permitted: true } : { name, permitted: false });
-      return { output: [{ type: 'text', text: JSON.stringify(catalog) }] };
+export function mcpTools(connections: Connections) {
+  const server = Type.Optional(Type.String({ description: 'Connection ID from mcp_list. Optional if there is exactly one MCP server.' }));
+  const servers = () => connections.list().filter(c => c.kind === 'mcp');
+  return [defineTool({ name: 'mcp_list', description: 'List MCP servers, or discover tools and permitted argument schemas on one server.',
+    parameters: Type.Object({ server }), replay: 'unsafe', async execute({server}, _api, ctx) {
+      const all = servers();
+      if (!server && all.length !== 1) return { output: [{ type: 'text', text: JSON.stringify(all.map(({id,name}) => ({id,name}))) }] };
+      const row = await connections.discover(server ?? all[0].id, ctx.abortSignal);
+      const tools = row.catalog.map(tool => row.allowed.includes(tool.name) ? {...tool, permitted: true} : {name: tool.name, permitted: false});
+      return { output: [{ type: 'text', text: JSON.stringify({server: row.id, tools}) }] };
     },
-  }), defineTool({ name: 'mcp_call', description: 'Call a permitted MCP tool from mcp_list with its JSON arguments. Actions can change devices. Only take actions requested by the user.',
-    parameters: Type.Object({ name: Type.String(), arguments_json: Type.String({ description: 'A JSON object matching the listed input schema; use {} for no arguments.', maxLength: 16_384 }) }), replay: 'unsafe',
-    async execute({ name, arguments_json }, _api, ctx) {
-      if (!allowed.has(name)) throw new Error('This MCP tool is not permitted by Hel-Pi configuration.');
+  }), defineTool({ name: 'mcp_call', description: 'Call a tool permitted on the selected MCP server. Only perform device actions requested by the user.',
+    parameters: Type.Object({ server, name: Type.String(), arguments_json: Type.String({ description: 'JSON object matching the listed input schema.', maxLength: 16_384 }) }), replay: 'unsafe',
+    async execute({ server, name, arguments_json }, _api, ctx) {
+      const all = servers();
+      if (!server && all.length !== 1) throw new Error('Choose an MCP server ID from mcp_list.');
       let args;
       try { args = JSON.parse(arguments_json); } catch { throw new Error('MCP arguments must be a JSON object.'); }
       if (!args || Array.isArray(args) || typeof args !== 'object') throw new Error('MCP arguments must be a JSON object.');
-      const result = await session(ctx.abortSignal, (client, signal) => client.callTool(name, args, { signal }));
+      const result = await connections.call(server ?? all[0].id, name, args, ctx.abortSignal);
       return { output: toLlmContent(result), isError: result.isError === true };
     },
   })] as const;

@@ -1,7 +1,7 @@
 name: Hel-Pi
 slug: hel_pi
-description: A private, persistent chat using your ChatGPT plan.
-version: 0.1.0
+description: A personal assistant with persistent memory and local tools using your ChatGPT plan.
+version: 0.2.0
 arch: [amd64, aarch64]
 url: https://github.com/eifinger/hel-pi
 startup: application
@@ -15,9 +15,15 @@ panel_icon: mdi:chat-outline
 backup: cold
 options: {}
 schema:
+  assistant_instructions: str?
   direct_access_key: password?
-  web_search: list(off|chatgpt|brave)?
+  web_search: list(off|chatgpt|brave|exa|tavily|deepseek)?
+  web_extract: list(off|built-in|firecrawl|exa|deepseek)?
   brave_api_key: password?
+  exa_api_key: password?
+  tavily_api_key: password?
+  deepseek_api_key: password?
+  firecrawl_api_key: password?
   read_web_pages: bool?
   mcp_url: url?
   mcp_token: password?

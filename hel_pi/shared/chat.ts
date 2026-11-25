@@ -15,7 +15,7 @@ export type ChatUsage = { input: number; output: number; cacheRead: number; cach
 export type ConversationActivity = { kind: "idle" | "thinking" | "replying" } | { kind: "tool"; name: string; summary?: string };
 export type MessageEvent = { type: "message"; message: Message; final: boolean; previousId?: string };
 /** A snapshot's history window is authoritative; older pages remain client-side. */
-export type ConversationResponse = { messages: Message[]; history?: { nextBefore?: string }; busy: boolean; activity: ConversationActivity; latest?: SubmissionReceipt; interruption?: string; previousIds?: Record<string, string>; usage?: ChatUsage; compactions?: ActiveCompaction[] };
+export type ConversationResponse = { messages: Message[]; history?: { nextBefore?: string }; busy: boolean; activity: ConversationActivity; latest?: SubmissionReceipt; interruption?: string; oversizedMemoryFiles?: string[]; previousIds?: Record<string, string>; usage?: ChatUsage; compactions?: ActiveCompaction[] };
 export function isHistoryCursor(value: string): boolean { return /^[1-9]\d*$/.test(value) && Number.isSafeInteger(Number(value)); }
 export type StreamEvent =
   | MessageEvent

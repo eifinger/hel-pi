@@ -7,6 +7,7 @@ import {
   InboxDoc,
   LiveDoc,
   type ConversationId,
+  type AgentChange,
   type Registry,
 } from "@earendil-works/pi-durable";
 import type { WorkspacePaths } from "../workspace";
@@ -34,6 +35,7 @@ export async function openRuntime(
   paths: WorkspacePaths,
   config: WorkspaceModelConfig,
   registry: Registry,
+  mainAgent: AgentChange,
 ) {
   const { storage, persisted, maintenance } = await openRuntimeStorage(runtimePaths(paths.home).sessions);
   let harness: Harness;
@@ -117,6 +119,7 @@ export async function openRuntime(
     const recovery = await prepareRestart(harness, recoveryIds);
     for (const id of recovery.interruptedIds)
       if (!interrupted.includes(id)) interrupted.push(id);
+    await root.configure(mainAgent, ctx);
     const rootAgent = await root.agent(ctx);
     await harness.commit(async (tx) => {
       const files = new TaskFiles(paths.workspace);

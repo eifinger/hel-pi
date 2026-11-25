@@ -8,14 +8,39 @@
   <title>Hel-Pi · Conversation</title>
   <link rel="icon" href="mark.svg" type="image/svg+xml">
   <link rel="stylesheet" href="app.css">
-  <script src="app.js" defer></script>
+  <link rel="stylesheet" href="library.css">
+  <link rel="stylesheet" href="workspace.css">
+  <script type="module" src="app.js"></script>
 </head>
 <body>
   <header class="bar">
-    <div class="brand"><img src="mark.svg" alt="" width="34" height="34"><strong>Hel-Pi</strong><span id="route"></span></div>
-    <nav aria-label="Session"><button id="account-nav" hidden>Account</button><button id="back" hidden>Back to chat</button><button id="logout" hidden>Sign out</button></nav>
+    <button id="menu" class="icon-button" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+    <div class="brand"><img src="mark.svg" alt="" width="34" height="34"><strong>Hel-Pi</strong></div>
   </header>
-  <main>
+  <button aria-label="Close navigation" tabindex="-1" id="scrim" hidden></button>
+  <aside id="sidebar" aria-label="Workspace navigation" hidden>
+    <div class="side-brand brand"><img src="mark.svg" alt="" width="38" height="38"><div class="nav-label"><strong>Hel-Pi</strong><small>Assistant workspace</small></div></div>
+    <nav aria-label="Workspace">
+      <p class="kicker nav-label">Workspace</p>
+      <button data-view="chat" title="Chat" aria-label="Chat"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 13a3 3 0 0 1-3 3H9l-5 4V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2zM8 8h8m-8 4h5"/></svg><span class="nav-label">Chat</span></button>
+      <button data-view="side-chats" title="Side chats" aria-label="Side chats"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4H4v9l3-2h7zM9 15v2h8l4 3V8h-3"/></svg><span class="nav-label">Side chats</span></button>
+      <button data-view="tasks" title="Tasks" aria-label="Tasks"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4m8-4v4m-8 6 3 3 5-6"/></svg><span class="nav-label">Tasks</span></button>
+      <button data-view="posts" title="Posts" aria-label="Posts"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4zM8 9h8m-8 5h5"/></svg><span class="nav-label">Posts</span></button>
+      <p class="kicker nav-label">Library</p>
+      <button data-view="artifacts" title="Artifacts" aria-label="Artifacts"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7V5h7l2 3h9v11H3z"/></svg><span class="nav-label">Artifacts</span></button>
+      <button data-view="skills" title="Skills" aria-label="Skills"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6C9 4 6 4 3 5v13c3-1 6-1 9 1 3-2 6-2 9-1V5c-3-1-6-1-9 1zm0 0v13"/></svg><span class="nav-label">Skills</span></button>
+      <button data-view="memories" title="Memories" aria-label="Memories"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5a2 2 0 0 1 2-2h12v18H7a2 2 0 0 1-2-2zm0 13a2 2 0 0 1 2-2h12M9 7h6m-6 4h4"/></svg><span class="nav-label">Memories</span></button>
+      <button data-view="tools" title="Tools" aria-label="Tools"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.5"/><rect x="14" y="3.5" width="6.5" height="6.5" rx="1.5"/><rect x="3.5" y="14" width="6.5" height="6.5" rx="1.5"/><rect x="14" y="14" width="6.5" height="6.5" rx="1.5"/></svg><span class="nav-label">Tools</span></button>
+      <button data-view="connections" title="Connections" aria-label="Connections"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8.5 15.5 7-7M9 8l2-2a4.2 4.2 0 0 1 6 6l-2 2m0 2-2 2a4.2 4.2 0 0 1-6-6l2-2"/></svg><span class="nav-label">Connections</span></button>
+      <button data-view="models" title="Model settings" aria-label="Model settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h6m5 0h5M4 17h9m5 0h2"/><circle cx="12.5" cy="7" r="2.5"/><circle cx="15.5" cy="17" r="2.5"/></svg><span class="nav-label">Model settings</span></button>
+    </nav>
+    <div class="side-foot">
+      <p id="route" class="nav-label"></p>
+      <button id="logout" aria-label="Sign out" title="Sign out" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4H5v16h5m-1-8h12m-4-4 4 4-4 4"/></svg><span class="nav-label">Sign out</span></button>
+      <button id="collapse" aria-controls="sidebar"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16m7-11-3 3 3 3"/></svg><span class="nav-label">Collapse sidebar</span></button>
+    </div>
+  </aside>
+  <main id="main" tabindex="-1">
     <noscript>This chat needs JavaScript. Enable it and reload the page.</noscript>
     <section id="waiting" class="settings" aria-labelledby="wait-title">
       <p class="kicker">Connection</p><h1 id="wait-title">Opening Hel-Pi…</h1>
@@ -36,7 +61,8 @@
     </section>
 
     <section id="account" class="settings" aria-labelledby="account-title" hidden>
-      <p class="kicker">Account connection</p><h1 id="account-title">Connect ChatGPT</h1>
+      <button id="back" class="back-link">← Connections</button>
+      <p class="kicker">Model account</p><h1 id="account-title">Connect ChatGPT</h1>
       <p class="lead" id="account-note">Connect a ChatGPT account to start chatting with Hel-Pi.</p>
       <div class="card steps">
         <section class="step"><span class="number" aria-hidden="true">01</span><div>
@@ -56,13 +82,14 @@
     </section>
 
     <section id="chat" aria-labelledby="chat-title" hidden>
-      <header class="chat-head"><div><p class="kicker">Workspace</p><h1 id="chat-title">Conversation</h1></div><span id="live" class="badge" role="status">Connecting</span></header>
+      <header class="chat-head"><div><p class="kicker" id="chat-context">Workspace / Chat</p><h1 id="chat-title">Conversation</h1></div><div class="actions"><button id="chat-options" class="secondary" aria-haspopup="dialog">Chat actions</button><span id="live" class="badge" role="status">Connecting</span></div></header>
       <div id="transcript" tabindex="0" role="region" aria-label="Chat history">
         <div id="older-row" hidden><button class="secondary" id="older">Load older messages</button></div>
         <div id="messages"></div>
         <div id="empty" hidden><img src="mark.svg" alt="" width="44" height="44"><h2>Start a conversation</h2><p>Send a message or attach a file.<br>Your conversation will be here when you return.</p></div>
       </div>
       <div class="compose-area">
+        <p id="memory-warning" class="notice" role="status" hidden></p>
         <div id="chat-error" class="notice" role="alert" hidden><span id="error-detail"></span> <button id="recover" class="text-button" hidden>Reconnect ChatGPT</button></div>
         <p id="activity" role="status" hidden></p>
         <form id="composer" class="card">
@@ -75,6 +102,38 @@
           </div>
         </form><p class="limits">Up to 4 text or image files <span aria-hidden="true">·</span> 8 MiB per file</p>
       </div>
+    </section>
+    <section id="tools" class="work-page" aria-labelledby="tools-title" hidden>
+      <header class="page-head"><p class="kicker">Workspace / Tools</p><h1 id="tools-title">Tool library</h1><p>Browse what Hel-Pi can use and review local tool revisions.</p></header>
+      <div id="tools-body"></div>
+    </section>
+    <section id="connections" class="work-page" aria-labelledby="connections-title" hidden>
+      <header class="page-head"><p class="kicker">Workspace / Connections</p><h1 id="connections-title">Connections</h1><p>Manage the account and services available to your workspace.</p></header>
+      <div class="account-row card"><span class="tile-icon" aria-hidden="true">π</span><div><p class="kicker">Model account</p><h2>ChatGPT</h2><p id="account-summary" class="muted"></p></div><button id="account-nav" class="secondary">Manage account</button></div>
+      <div id="connections-body"></div>
+    </section>
+    <section id="memories" class="work-page" aria-labelledby="memories-title" hidden>
+      <header class="page-head"><p class="kicker">Library / Memories</p><h1 id="memories-title">Memories</h1><p>Explore the household wiki or review the notes and instructions Hel-Pi keeps.</p></header>
+      <div class="revision-tabs" aria-label="Memory views"><button class="revision-tab" id="wiki-tab">Household wiki</button><button class="revision-tab" id="notes-tab">Notes &amp; instructions</button></div>
+      <div id="wiki-body"></div><div id="memories-body" hidden></div>
+    </section>
+    <section id="side-chats" class="work-page" aria-labelledby="side-title" hidden>
+      <header class="page-head"><p class="kicker">Workspace / Conversations</p><h1 id="side-title">Side chats</h1><p>Explore a separate thread without interrupting your main conversation.</p></header><div id="side-chats-body"></div>
+    </section>
+    <section id="tasks" class="work-page" aria-labelledby="tasks-title" hidden>
+      <header class="page-head"><p class="kicker">Workspace / Schedule</p><h1 id="tasks-title">Tasks</h1><p>Give Hel-Pi a job to run on demand, at a set time, or on a recurring schedule.</p></header><div id="tasks-body"></div>
+    </section>
+    <section id="posts" class="work-page" aria-labelledby="posts-title" hidden>
+      <header class="page-head"><p class="kicker">Workspace / Reading room</p><h1 id="posts-title">Posts</h1><p>Read the updates Hel-Pi writes from your workspace.</p></header><div id="posts-body"></div>
+    </section>
+    <section id="artifacts" class="work-page" aria-labelledby="artifacts-title" hidden>
+      <header class="page-head"><p class="kicker">Library / Files</p><h1 id="artifacts-title">Artifacts</h1><p>Browse, preview, and download files Hel-Pi has made for you.</p></header><div id="artifacts-body"></div>
+    </section>
+    <section id="skills" class="work-page" aria-labelledby="skills-title" hidden>
+      <header class="page-head"><p class="kicker">Library / Reference</p><h1 id="skills-title">Skills</h1><p>Browse the guides Hel-Pi can use in your workspace.</p></header><div id="skills-body"></div>
+    </section>
+    <section id="models" class="work-page" aria-labelledby="models-title" hidden>
+      <header class="page-head"><p class="kicker">Workspace / Preferences</p><h1 id="models-title">Model settings</h1><p>Choose the models and thinking levels used for conversations and background work.</p></header><div id="models-body"></div>
     </section>
   </main>
 </body>

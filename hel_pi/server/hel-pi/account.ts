@@ -82,7 +82,7 @@ async function eligibleModel(attempt: ReturnType<typeof begin>) {
 
 const error = (message: string, status: number) => json({ error: message }, status);
 
-/** Single account for this installation. The caller must authenticate HA ingress before dispatch. */
+/** Single account shared by authenticated ingress and direct clients. */
 export function createAccount(home: string, runtime: Pick<AppRuntime, "settings" | "configure">) {
   const config = runtimePaths(home).config;
   const store = new StoredCredentialStore(join(config, "auth.json"));

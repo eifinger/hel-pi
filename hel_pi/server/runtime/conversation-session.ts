@@ -11,7 +11,6 @@ import type {
   CompactionResult,
   RuntimeDescription,
 } from "../../shared/runtime";
-import type { WorkspacePaths } from "../workspace";
 import type {
   BackgroundReply,
   InputSource,
@@ -22,7 +21,6 @@ import { attachmentPrompt } from "../chat/input";
 import { CompactionExecutionError, ModelConfigurationError } from "./types";
 import { compactionResult } from "./compactions";
 import { registerInput } from "./input-origin";
-import { loadWorkspaceResources } from "./resources";
 import {
   requireAvailableModel,
   type WorkspaceModelConfig,
@@ -43,12 +41,12 @@ export class DurableChatSession implements ChatSession {
   private closing?: Promise<void>;
 
   constructor(
-    readonly paths: WorkspacePaths,
     private readonly harness: Harness,
     storage: Storage,
     private readonly conversation: Conversation,
     private readonly config: WorkspaceModelConfig,
     private readonly searchConfigured: boolean,
+    private readonly oversizedMemoryFiles: () => string[],
     private readonly assertWritable: () => Promise<void> = async () => {},
     private readonly replies?: BackgroundReplies,
   ) {
@@ -130,8 +128,8 @@ export class DurableChatSession implements ChatSession {
   syncConfiguredMain() {
     return this.control.maintain(() => this.applyMainModel());
   }
-  snapshot(options?: { limit: number }) {
-    return this.view.snapshot(options);
+  async snapshot(options?: { limit: number }) {
+    return {...await this.view.snapshot(options), oversizedMemoryFiles:this.oversizedMemoryFiles()};
   }
   history(before?: string, limit?: number) {
     return this.view.history(before, limit);
@@ -303,7 +301,6 @@ export class DurableChatSession implements ChatSession {
   }
   async describe(): Promise<RuntimeDescription> {
     const agent = await this.conversation.agent(ctx);
-    const resources = await loadWorkspaceResources(this.paths);
     const tools = agent.tools.map((tool) => ({
       name: tool.name,
       status:
@@ -331,7 +328,7 @@ export class DurableChatSession implements ChatSession {
           model,
         ) as ModelThinkingLevel[],
       })),
-      skills: resources.skills,
+      skills: [],
     };
   }
   async modelReady() {
@@ -356,6 +353,7 @@ export class DurableChatSession implements ChatSession {
 
   compact(): Promise<CompactionResult> {
     return this.control.maintain(async () => {
+      await this.applyMainModel();
       const task = await this.conversation.compact(undefined, ctx);
       try {
         return await compactionResult(this.harness, task);

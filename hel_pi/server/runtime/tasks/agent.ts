@@ -40,7 +40,7 @@ export async function spawnTaskAgent(tx: Tx, children: SubagentRuntime, files: T
         ...childScope(agent), instructions: BACKGROUND_AGENT_INSTRUCTIONS },
       resources: resources(files, binding.taskId),
     },
-    message: child => prompt(message, binding, child, files.directory(binding.taskId), memoryCharacters),
+    message: child => prompt(message, binding, child, `tasks/${binding.taskId}`, memoryCharacters),
     policy: child => policy(binding, child),
   });
   (await tx.doc(TaskContext, child)).binding = binding;

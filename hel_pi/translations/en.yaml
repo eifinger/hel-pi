@@ -1,22 +1,40 @@
 configuration:
+  assistant_instructions:
+    name: Assistant instructions
+    description: Optional behavior and style instructions (up to 8192 characters). Save and restart to override the instructions in Hel-Pi → Memories. Leave blank to use the in-app editor.
   direct_access_key:
     name: Direct access key (optional)
     description: Set a random key of at least 32 characters to enable Tailscale. Restart and open the Tailscale sign-in link in the app log. Leave unset for Home Assistant ingress only.
   web_search:
     name: Web search provider
-    description: Select ChatGPT plan search or Brave Search. Leave unset for no search.
+    description: Allow model-generated queries to be sent to one selected provider. ChatGPT uses your connected plan; other providers require their own API key. Off by default, with no fallback.
+  web_extract:
+    name: Page extraction provider
+    description: Built-in reads public HTTPS pages directly. Firecrawl, Exa and DeepSeek receive the page URL, including its query string, and require a key. No fallback. Leave unset to keep the Read public web pages setting.
   brave_api_key:
     name: Brave Search API key
     description: Used only when Brave is the selected search provider.
+  exa_api_key:
+    name: Exa API key
+    description: Used only when Exa is selected for search or page extraction.
+  tavily_api_key:
+    name: Tavily API key
+    description: Used only when Tavily is selected for search.
+  deepseek_api_key:
+    name: DeepSeek API key
+    description: Used only when DeepSeek is selected for search or page extraction.
+  firecrawl_api_key:
+    name: Firecrawl API key
+    description: Used only when Firecrawl is selected for page extraction.
   read_web_pages:
     name: Read public web pages
-    description: Allow the assistant to fetch public HTTPS pages. No browser login or JavaScript.
+    description: Enable the built-in reader if Page extraction provider is unset. Off by default. Does not send URLs to an extraction service, use a browser login, or run JavaScript.
   mcp_url:
-    name: MCP server URL
-    description: One trusted Streamable HTTP endpoint. Leave empty to disable MCP.
+    name: Legacy MCP server URL
+    description: Imported once when upgrading from 0.1.0. Manage MCP servers in Hel-Pi → Connections.
   mcp_token:
-    name: MCP bearer token
-    description: For Home Assistant, use a dedicated user's long-lived access token.
+    name: Legacy MCP bearer token
+    description: Imported with the legacy MCP URL. Replace or remove credentials in Connections.
   mcp_allowed_tools:
-    name: Permitted MCP tools
-    description: Comma-separated, exact tool names. Leave empty to list tools without permitting any calls.
+    name: Legacy permitted MCP tools
+    description: Imported with the legacy MCP URL. Select allowed tools per server in Connections.

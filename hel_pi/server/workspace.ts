@@ -7,6 +7,7 @@ import {
 } from "node:fs";
 import { isAbsolute, join, relative, resolve, sep } from "node:path";
 import { defaultPikoFile } from "./config/defaults";
+import { scopedDirectory } from './scoped-files';
 
 export type WorkspacePaths = {
   home: string;
@@ -41,15 +42,14 @@ export function isWithin(root: string, target: string): boolean {
 export function initializeWorkspace(paths: WorkspacePaths): WorkspacePaths {
   mkdirSync(paths.workspace, { recursive: true });
   mkdirSync(paths.state, { recursive: true });
+  if (!lstatSync(paths.workspace).isDirectory()) throw new Error('The memory workspace must not be a symbolic link.');
   const workspace = realpathSync(paths.workspace);
   const state = realpathSync(paths.state);
-  if (isWithin(workspace, state))
-    throw new Error("Piko state must be outside the assistant workspace.");
+  const config = join(paths.home, 'config');
+  if (workspace !== paths.workspace || state !== paths.state || [state, config].some(privateDir => isWithin(workspace, privateDir) || isWithin(privateDir, workspace)))
+    throw new Error('Private configuration and state must not overlap the assistant workspace or follow directory links.');
   for (const directory of ["config", "state/durable", "state/tmp"]) {
-    const path = join(paths.home, directory);
-    mkdirSync(path, { recursive: true });
-    if (!isWithin(realpathSync(paths.home), realpathSync(path)))
-      throw new Error(`Piko data directory escapes its root: ${directory}`);
+    scopedDirectory(paths.home, directory.split('/'), true, () => {});
   }
   for (const [name, value] of Object.entries({
     "piko.json": defaultPikoFile,
@@ -67,36 +67,23 @@ export function initializeWorkspace(paths: WorkspacePaths): WorkspacePaths {
     }
   }
   for (const directory of [
-    ".agents",
     ".agents/skills",
     "memory",
     "projects",
     "artifacts",
+    "wiki",
   ]) {
-    const path = join(workspace, directory);
-    mkdirSync(path, { recursive: true });
-    if (!isWithin(workspace, realpathSync(path)))
-      throw new Error(`Workspace directory escapes its root: ${directory}`);
-  }
-  for (const name of ["AGENTS.md", "MEMORY.md"]) {
-    const path = join(workspace, name);
-    const template = readGuidance(join(paths.resources, "templates"), name);
-    try {
-      writeFileSync(path, template, { flag: "wx" });
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
-    }
-    if (!lstatSync(path).isFile())
-      throw new Error(`Workspace guidance must be a regular file: ${name}`);
+    scopedDirectory(workspace, directory.split('/'), true, () => {});
   }
   return { ...paths, home: realpathSync(paths.home), workspace, state };
 }
 
-/** Read the complete validated guidance file; never silently truncate prompt text. */
+/** Posts use complete memory documents or omit them, like chat. */
 export function readGuidance(root: string, name: string): string {
   const path = join(root, name);
   const stat = lstatSync(path);
-  if (!stat.isFile() || !isWithin(realpathSync(root), realpathSync(path)))
+  if (!stat.isFile() || stat.nlink !== 1 || !isWithin(realpathSync(root), realpathSync(path)))
     throw new Error(`Invalid guidance file: ${name}`);
+  if (stat.size > 65_536) return '';
   return readFileSync(path, "utf8");
 }

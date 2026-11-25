@@ -3,6 +3,7 @@ export type TaskSchedule = null | { type: "once"; at: string } | { type: "cron";
 export type AssistantTaskDraft = { title: string; prompt: string; schedule: TaskSchedule; scheduleText: string };
 export type AssistantTask = AssistantTaskDraft & {
   id: string;
+  revision: number;
   status: "active" | "archived";
   createdAt: number;
   updatedAt: number;
@@ -21,7 +22,7 @@ export type AssistantTaskDetail = { task: AssistantTask; executions: TaskExecuti
 export type TaskExecutionDetail = { execution: TaskExecution; answer: string };
 export type AssistantTaskCommand = { requestId: string } & (
   | { action: "create"; task: AssistantTaskDraft }
-  | { action: "update"; id: string; task: AssistantTaskDraft }
+  | { action: "update"; id: string; revision: number; task: AssistantTaskDraft }
   | { action: "status"; id: string; status: AssistantTask["status"] }
   | { action: "run"; id: string }
   | { action: "stop"; id: string }

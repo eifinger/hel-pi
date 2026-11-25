@@ -59,7 +59,7 @@ export type WorkspaceSkillDetail = {
   disableModelInvocation: boolean;
 };
 export interface PostsRuntime {
-  list(before?: string, limit?: number): Promise<PostPage>;
+  list(before?: string, limit?: number): Promise<PostPage & {activeGeneration:PostGeneration | null}>;
   read(id: string): Promise<Post>;
   remove(id: string): Promise<void>;
   generate(command: GeneratePost): Promise<PostGeneration>;

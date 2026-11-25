@@ -16,7 +16,7 @@ export const BACKGROUND_AGENT_INSTRUCTIONS = "You are a background workspace ass
 /** Background children never delegate or manage tasks, and never re-enter the curation task. */
 const CHILD_TOOL_PREFIXES = ["subagent_", "task_", "sessions_", "posts_"];
 const TASK_TOOL_PREFIXES = ["task_", "posts_"];
-const CHILD_EXTENSIONS = ["piko-subagents", "piko-subagent-tools", "piko-tasks", "piko-memory-curation", "piko-wiki-curation", "piko-session-search", "piko-posts", "piko-posts-generation", "piko-sent-attachments", "piko-widgets"];
+const CHILD_EXTENSIONS = ["hel-pi-guidance", "hel-pi-memory-files", "piko-subagents", "piko-subagent-tools", "piko-tasks", "piko-memory-curation", "piko-wiki-curation", "piko-session-search", "piko-posts", "piko-posts-generation", "piko-sent-attachments", "piko-widgets"];
 const TASK_EXTENSIONS = ["piko-tasks", "piko-memory-curation", "piko-wiki-curation", "piko-posts", "piko-posts-generation"]
 
 /** One place for what a background child may inherit from the main agent. */
@@ -31,6 +31,6 @@ export function childScope(agent: Agent) {
 export function sideChatScope(agent: Agent) {
   return {
     extensions: agent.extensions.filter(value => !TASK_EXTENSIONS.includes(value.name)),
-    tools: [...agent.tools, ...agent.deferred].filter(value => !TASK_TOOL_PREFIXES.some(prefix => value.name.startsWith(prefix))),
+    tools: [...agent.tools, ...agent.deferred].filter(value => value.name !== 'memory_save' && !TASK_TOOL_PREFIXES.some(prefix => value.name.startsWith(prefix))),
   };
 }
