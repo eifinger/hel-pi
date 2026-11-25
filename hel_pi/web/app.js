@@ -1,4 +1,5 @@
 import { $, el, api, post, commandId } from './ui.js';
+import { markdown } from './markdown.js';
 import { openTools } from './tools.js';
 import { openConnections } from './connections.js';
 import { memoryView, wikiFile } from './wiki.js';
@@ -201,22 +202,7 @@ function row(message) {
   byline.append(el("strong", "", user ? "You" : "Hel-Pi"));
   if (Number.isFinite(message.createdAt)) byline.append(el("time", "", dateFormat.format(message.createdAt)));
   body.append(byline);
-  if (message.content) {
-    const paragraph = el("p", "body-text");
-    let start = 0;
-    if (!user) for (const match of message.content.matchAll(/https?:\/\/[^\s<>"'`]+/gi)) {
-      let source = match[0].replace(/[.,;:!?\]]+$/, "");
-      if (source.endsWith(")") && source.split(")").length > source.split("(").length) source = source.slice(0, -1);
-      if (!URL.canParse(source)) continue;
-      const url = new URL(source);
-      if (url.username || url.password) continue;
-      const link = el("a", "", source);
-      link.href = url.href; link.target = "_blank"; link.rel = "noopener noreferrer";
-      paragraph.append(message.content.slice(start, match.index), link);
-      start = match.index + source.length;
-    }
-    paragraph.append(message.content.slice(start)); body.append(paragraph);
-  }
+  if (message.content) body.append(user ? el('p', 'body-text', message.content) : markdown(message.content, {chat:true}));
   if (message.attachments?.length) {
     const list = el("ul", "downloads");
     for (const file of message.attachments) {
@@ -225,12 +211,17 @@ function row(message) {
       const link = el("a", "", name); link.download = name;
       // Never follow a server-supplied absolute URL or trust a file name as a path.
       const sent = file.url?.startsWith('/api/sent-attachments/');
-      const route = sent ? `sent-attachments/${encodeURIComponent(file.id)}?name=${encodeURIComponent(name)}` : `attachments/${encodeURIComponent(file.id)}?download=1`;
-      link.href = `api/${route}`;
+      const route = sent ? `api/sent-attachments/${encodeURIComponent(file.id)}?name=${encodeURIComponent(name)}` : `api/attachments/${encodeURIComponent(file.id)}`;
+      link.href = sent ? route : `${route}?download=1`;
       link.title = `Download ${name}`;
       const item = el("li"); item.append(link); list.append(item);
+      if (/^image\/(?:png|jpeg|gif|webp|bmp)$/.test(file.mime)) {
+        const image = el('img', 'chat-picture'); image.alt = name; image.loading = 'lazy';
+        image.onerror = () => image.replaceWith(el('small', 'muted', 'Image preview unavailable.'));
+        image.src = sent ? `${route}&image=1` : route; item.prepend(image);
+      }
       if (sent && file.mime?.startsWith('audio/')) {
-        const audio = el('audio'); audio.controls = true; audio.preload = 'none'; audio.src = `api/${route}&play=1`; item.append(audio);
+        const audio = el('audio'); audio.controls = true; audio.preload = 'none'; audio.src = `${route}&play=1`; item.append(audio);
       }
     }
     body.append(list);
@@ -242,7 +233,7 @@ function renderHistory(prepend = false) {
   const pinned = height - pane.clientHeight - oldTop < 70;
   $("older-row").hidden = !nextBefore;
   $("empty").hidden = !!messages.length;
-  // Keep unchanged rows mounted while streaming or prepending; never interpret widgets or markup.
+  // Keep unchanged rows mounted while streaming or prepending.
   const wanted = new Set(messages.map(row));
   for (const child of Array.from(list.children)) if (!wanted.has(child)) child.remove();
   let at = list.firstElementChild;

@@ -5,7 +5,7 @@ import type { Connections } from './connections';
 import { deadline } from './deadline';
 
 export async function withMcp<T>(url: string, secret: string, signal: AbortSignal | undefined, operation: (client: McpClient, signal: AbortSignal) => Promise<T>) {
-  const client = new McpClient({ name: 'hel-pi', version: '0.2.0', requestTimeoutMs: 15_000 });
+  const client = new McpClient({ name: 'hel-pi', version: '0.2.1', requestTimeoutMs: 15_000 });
   const limit = deadline(20_000, signal);
   try {
     await client.connect(new StreamableHttpTransport({ url, headers: secret ? { Authorization: `Bearer ${secret}` } : {},

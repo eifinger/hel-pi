@@ -1,7 +1,7 @@
 name: Hel-Pi
 slug: hel_pi
 description: A personal assistant with persistent memory and local tools using your ChatGPT plan.
-version: 0.2.0
+version: 0.2.1
 arch: [amd64, aarch64]
 url: https://github.com/eifinger/hel-pi
 startup: application

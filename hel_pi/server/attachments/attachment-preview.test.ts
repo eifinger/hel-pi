@@ -40,5 +40,12 @@ test("incoming and sent files share text preview rules and separate original dow
     expect(imageDownload?.headers.get("content-disposition")).toStartWith("attachment;");
     const normalImage = await attachmentRequest(new Request(`http://localhost/api/attachments/${image.id}`), store);
     expect(normalImage?.headers.has("content-disposition")).toBe(false);
+    const imageBytes = Buffer.from(await normalImage!.arrayBuffer()), snapshot = store.saveSnapshotBytes('picture.png', imageBytes);
+    const previewUrl = (id: string) => new Request(`http://localhost/api/sent-attachments/${id}?image=1&name=misleading.jpg`);
+    const preview = await sentAttachmentRequest(previewUrl(snapshot.id), store);
+    expect(preview?.headers.get('content-type')).toBe('image/png');
+    expect(preview?.headers.has('content-disposition')).toBe(false);
+    expect(Buffer.from(await preview!.arrayBuffer())).toEqual(imageBytes);
+    expect((await sentAttachmentRequest(previewUrl(sent.id), store))?.status).toBe(415);
   } finally { await rm(root, { recursive: true, force: true }); }
 });

@@ -57,6 +57,12 @@
 .markdown pre { overflow:auto; padding:.7rem; background:#f3f6f0; border-radius:6px; }
 .markdown pre code { padding:0; background:none; }
 .markdown blockquote { border-left:3px solid #afc6ac; padding-left:1rem; color:var(--muted); }
+.chat-visual { margin:.65rem 0; min-width:0; border:1px solid var(--line); border-radius:9px; overflow:hidden; background:white; }
+.chat-visual img { display:block; width:100%; height:auto; max-height:22rem; object-fit:contain; padding:.85rem; }
+.chat-visual details { padding:.4rem .75rem; border-top:1px solid var(--line); background:#f8faf6; }
+.chat-visual summary { width:fit-content; cursor:pointer; font-size:.8rem; color:var(--green); }
+.chat-visual pre { max-height:16rem; }
+.chat-picture { display:block; max-width:100%; max-height:19rem; border-radius:6px; margin:.3rem 0; object-fit:contain; }
 .downloads audio { display:block; max-width:100%; margin-top:.4rem; }
 @media(max-width:700px) { .wiki-grid { grid-template-columns:minmax(0,1fr); } .wiki-grid .tool-index { max-height:12rem; overflow:auto; } }
 @media(max-height:760px) { #sidebar { padding-block:.75rem; } .side-brand { padding-bottom:.75rem; } #sidebar nav button { min-height:36px; } }

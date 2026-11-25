@@ -21,7 +21,7 @@ export function createSentAttachmentTools(store: AttachmentStore, readArtifact: 
   const path = Type.String({ minLength: 1, maxLength: 1024, description: "Workspace-relative artifact path, e.g. artifacts/report.md." });
   const attachment = defineTool({
     name: "send_attachment", replay: "unsafe",
-    description: "Send a snapshot of an artifact (document, image, audio or video) in this chat.",
+    description: "Send an existing artifact as a chat attachment. Pictures display inline. To draw a logo or diagram directly in a reply, use a self-contained SVG in a fenced svg block with a viewBox and title. Chat displays the drawing; no file or copy-and-paste step is needed.",
     parameters: Type.Object({ path }, { additionalProperties: false }),
     execute: async (args, api, context) => {
       const { path } = args;

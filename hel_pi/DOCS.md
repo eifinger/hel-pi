@@ -20,6 +20,8 @@ For a local install instead, copy the whole `hel_pi` directory to the `local_app
 
 Chat history and uploads are stored locally. Message context and files the model reads are sent to OpenAI for inference. Attach up to four files per message, at most 8 MiB each. The model can read text and supported images, not arbitrary documents or files on the host.
 
+Ask Hel-Pi to draw a logo or diagram in chat. A complete SVG in a `svg` code block appears as a picture; select **SVG source** to read the code. Uploaded and sent PNG, JPEG, GIF and WebP files appear beside their download links. Chat does not automatically load remote images or run HTML widgets.
+
 ## Browse and edit household memory
 
 Open **Memories → Household wiki**. Follow links from the index to pages about household topics, such as where you keep spare parts. Select **Edit page** to correct the Markdown, or **New page** to add a topic. The UI and assistant read the same files under `workspace/wiki/`. Chat consults these pages when relevant; they are not all sent with every message. A fresh wiki can be empty. You do not have to wait for Hel-Pi to create the first page.

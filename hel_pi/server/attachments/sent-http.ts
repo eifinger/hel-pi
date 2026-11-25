@@ -1,4 +1,4 @@
-import { AttachmentStore, detectExtension, safeAttachmentName } from "./store";
+import { AttachmentStore, detectAttachmentMimeType, detectExtension, safeAttachmentName } from "./store";
 import { audioPreviewResponse } from "./audio-preview";
 import { attachmentTextPreview } from "./text-preview";
 import { json } from "../http";
@@ -14,10 +14,13 @@ export async function sentAttachmentRequest(request: Request, store: AttachmentS
   const encoded = encodeURIComponent(name).replace(/[!'()*]/g, char => `%${char.charCodeAt(0).toString(16).toUpperCase()}`);
   if (url.searchParams.get("play") === "1") return audioPreviewResponse(request, bytes, detectExtension(name));
   if (url.searchParams.get("preview") === "1") return attachmentTextPreview(name, bytes);
+  const image = url.searchParams.get("image") === "1";
+  const mime = image ? detectAttachmentMimeType(bytes) : "application/octet-stream";
+  if (!mime) return json({ error: "Not a supported image." }, 415);
   return new Response(request.method === "HEAD" ? null : new Uint8Array(bytes).buffer, { headers: {
-    "Content-Type": "application/octet-stream",
+    "Content-Type": mime,
     "Content-Length": String(bytes.length),
-    "Content-Disposition": `attachment; filename="attachment"; filename*=UTF-8''${encoded}`,
+    ...(!image && { "Content-Disposition": `attachment; filename="attachment"; filename*=UTF-8''${encoded}` }),
     "Cache-Control": "private, max-age=31536000, immutable",
     "X-Content-Type-Options": "nosniff",
   } });

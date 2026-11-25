@@ -78,12 +78,12 @@ function openWiki(initial) {
     const copy = readingCopy(doc);
     reader.append(el('p', 'kicker', copy.type), heading(copy.title, button('Edit page', () => edit(dir, doc))));
     if (copy.description) reader.append(el('p', 'muted', copy.description));
-    const text = markdown(copy.text, (label, target) => {
+    const text = markdown(copy.text, {internalLink(label, target) {
       const path = resolveLink(file, target); if (!path) return;
       const link = el('a', '', label); link.href = `?wiki=${encodeURIComponent(path)}`;
       link.onclick = e => { if (!e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey) { e.preventDefault(); browse(parent(path), path); } };
       return link;
-    });
+    }});
     if (copy.text.trim()) reader.append(text);
     else if (!doc.text.trim()) reader.append(el('p', 'muted', 'This page has no text yet.'));
   }); }
