@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")/../hel_pi/piko"
+bun install --frozen-lockfile

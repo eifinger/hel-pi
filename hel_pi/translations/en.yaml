@@ -1,0 +1,4 @@
+configuration:
+  direct_access_key:
+    name: Direct access key (optional)
+    description: Set a random key of at least 32 characters to enable Tailscale. Restart and open the Tailscale sign-in link in the app log. Leave unset for Home Assistant ingress only.
