@@ -1,3 +1,0 @@
-Hel-Pi vendors the chat, attachment store and Pi Durable runtime from [Piko at bfe1a21](https://github.com/dandkong/piko/tree/bfe1a2149d2927b912800c924d29c18c947c54b8), under the included MIT license. The standalone server, Telegram, MCP, web tools, Expo client and their unused dependencies are omitted.
-
-`server/hel-pi/` owns the Home Assistant entry point and route allowlist. Local changes to `server/runtime/credentials.ts` persist OAuth refreshes; `server/auth.ts` supports browser sessions behind the private Tailscale Serve socket. Keep the fixed Pi and Bun versions in sync when updating upstream.

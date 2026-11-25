@@ -66,30 +66,38 @@ test('the model can read an upload but not app credentials, and the chat survive
     const file = await handle(new Request('http://app/api/attachments?name=inventory.txt', { method: 'POST', headers: ingressHeaders, body: marker }), true, supervisor);
     expect(file.status).toBe(201); upload = (await file.json()).id;
     const chat = () => handle(request('/api/chat', ingressHeaders), true, supervisor);
-    const events = await handle(request('/api/chat/events', ingressHeaders), true, supervisor);
-    expect(events.headers.get('content-type')).toBe('text/event-stream');
-    const reader = events.body!.getReader();
-    try {
-      expect((await handle(request('/api/chat', ingressHeaders, { requestId: 'fixture-turn', message: 'Check this inventory.', attachmentIds: [upload] }), true, supervisor)).status).toBe(200);
-      let stream = '';
-      while (!stream.includes('"type":"run-end"')) {
-        const item = await reader.read();
-        if (item.done) throw new Error('Stream closed before run end.');
-        stream += new TextDecoder().decode(item.value);
-      }
-      expect(stream).toContain('Fixture complete.');
-    } finally { await reader.cancel(); }
+    async function send(input: object) {
+      const events = await handle(request('/api/chat/events', ingressHeaders), true, supervisor);
+      expect(events.headers.get('content-type')).toBe('text/event-stream');
+      const reader = events.body!.getReader();
+      try {
+        expect((await handle(request('/api/chat', ingressHeaders, input), true, supervisor)).status).toBe(200);
+        let stream = '';
+        while (!stream.includes('"type":"run-end"')) {
+          const item = await reader.read();
+          if (item.done) throw new Error('Stream closed before run end.');
+          stream += new TextDecoder().decode(item.value);
+        }
+        expect(stream).toContain('Fixture complete.');
+      } finally { await reader.cancel(); }
+    }
+    await send({ requestId: 'fixture-turn', message: 'Check this inventory.', attachmentIds: [upload] });
     expect(seen).toHaveLength(3);
     expect(seen[0].tools).toEqual(['read']);
     expect(JSON.stringify(seen[1].messages.filter(m => m.role === 'tool'))).toContain(marker);
     expect(JSON.stringify(seen[2].messages.filter(m => m.role === 'tool'))).toContain('Only uploaded files can be read.');
     expect(JSON.stringify(seen)).not.toContain('test-only-key');
     await runtime.close(); runtime = undefined;
-    runtime = await openChat(paths); handle = await createHandler(paths, runtime);
+    runtime = await openChat(paths, { web_search: 'brave', brave_api_key: 'fixture-brave', read_web_pages: true,
+      mcp_url: 'https://unreachable.invalid/mcp', mcp_token: 'fixture-mcp' });
+    handle = await createHandler(paths, runtime);
     const history = (await (await chat()).json()).messages;
     expect(history.map((m: { content: string }) => m.content)).toEqual(['Check this inventory.', 'Fixture complete.']);
     expect(history[0].attachments[0].id).toBe(upload);
     const saved = await handle(request('/api/attachments/' + encodeURIComponent(upload), ingressHeaders), true, supervisor);
     expect(await saved.text()).toBe(marker);
+    await send({ requestId: 'after-options', message: 'Hello again.' });
+    expect(seen.at(-1)?.tools.toSorted()).toEqual(['mcp_call', 'mcp_list', 'read', 'web_extract', 'web_search']);
+    expect(JSON.stringify(seen)).not.toMatch(/fixture-(brave|mcp)/);
   } finally { if (runtime) await runtime.close(); await model.stop(true); await rm(home, { recursive: true }); }
 }, 12_000);

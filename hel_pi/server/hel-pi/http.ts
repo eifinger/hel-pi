@@ -18,7 +18,7 @@ const securityHeaders = {
 };
 
 export async function createHandler(paths: WorkspacePaths, runtime: Awaited<ReturnType<typeof openChat>>, key?: string) {
-  const directory = join(import.meta.dir, '../../../web');
+  const directory = join(import.meta.dir, '../../web');
   const index = await readFile(join(directory, 'index.html'), 'utf8');
   const assets = new Set((await readdir(directory)).filter(file => /\.(?:css|js|svg)$/.test(file)));
   const auth = key ? createAuth(key, [], true) : undefined;
@@ -55,7 +55,7 @@ export async function createHandler(paths: WorkspacePaths, runtime: Awaited<Retu
         if (response) return response;
       }
       if (path === '/api/account') return ingress ? await account(request) : json({ error: 'Open Home Assistant to manage the account.' }, 403);
-      if (request.method === 'GET' && path === '/api/health') return json({ ok: true, app: 'Piko', runtime: 'Pi', modelReady: await runtime.isModelReady(), activeSessions: runtime.chats.main.size });
+      if (request.method === 'GET' && path === '/api/health') return json({ ok: true, app: 'Hel-Pi', runtime: 'Pi', modelReady: await runtime.isModelReady(), activeSessions: runtime.chats.main.size });
       if (/^\/api\/chat(?:\/(?:events|history|stop))?$/.test(path)) {
         const response = await chatRequest(request, runtime.chats, uploads, 64_000);
         if (response) return response;

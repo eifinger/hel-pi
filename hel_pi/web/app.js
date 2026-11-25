@@ -154,7 +154,22 @@ function row(message) {
   byline.append(el("strong", "", user ? "You" : "Hel-Pi"));
   if (Number.isFinite(message.createdAt)) byline.append(el("time", "", dateFormat.format(message.createdAt)));
   body.append(byline);
-  if (message.content) body.append(el("p", "body-text", message.content));
+  if (message.content) {
+    const paragraph = el("p", "body-text");
+    let start = 0;
+    if (!user) for (const match of message.content.matchAll(/https?:\/\/[^\s<>"'`]+/gi)) {
+      let source = match[0].replace(/[.,;:!?\]]+$/, "");
+      if (source.endsWith(")") && source.split(")").length > source.split("(").length) source = source.slice(0, -1);
+      if (!URL.canParse(source)) continue;
+      const url = new URL(source);
+      if (url.username || url.password) continue;
+      const link = el("a", "", source);
+      link.href = url.href; link.target = "_blank"; link.rel = "noopener noreferrer";
+      paragraph.append(message.content.slice(start, match.index), link);
+      start = match.index + source.length;
+    }
+    paragraph.append(message.content.slice(start)); body.append(paragraph);
+  }
   if (message.attachments?.length) {
     const list = el("ul", "downloads");
     for (const file of message.attachments) {

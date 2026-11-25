@@ -2,3 +2,21 @@ configuration:
   direct_access_key:
     name: Direct access key (optional)
     description: Set a random key of at least 32 characters to enable Tailscale. Restart and open the Tailscale sign-in link in the app log. Leave unset for Home Assistant ingress only.
+  web_search:
+    name: Web search provider
+    description: Select ChatGPT plan search or Brave Search. Leave unset for no search.
+  brave_api_key:
+    name: Brave Search API key
+    description: Used only when Brave is the selected search provider.
+  read_web_pages:
+    name: Read public web pages
+    description: Allow the assistant to fetch public HTTPS pages. No browser login or JavaScript.
+  mcp_url:
+    name: MCP server URL
+    description: One trusted Streamable HTTP endpoint. Leave empty to disable MCP.
+  mcp_token:
+    name: MCP bearer token
+    description: For Home Assistant, use a dedicated user's long-lived access token.
+  mcp_allowed_tools:
+    name: Permitted MCP tools
+    description: Comma-separated, exact tool names. Leave empty to list tools without permitting any calls.

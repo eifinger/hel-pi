@@ -1,7 +1,8 @@
 {
-  "name": "piko",
+  "name": "hel-pi",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "start": "bun server/hel-pi/index.ts",
@@ -11,9 +12,14 @@
     "@earendil-works/chord": "1.6.0",
     "@earendil-works/pi-ai": "1.6.0",
     "@earendil-works/pi-durable": "1.6.0",
+    "@earendil-works/pi-mcp": "1.6.0",
     "croner": "11.0.0",
+    "ipaddr.js": "2.5.0",
+    "linkedom": "0.18.15",
     "mime-types": "^3.0.2",
-    "typebox": "1.4.3"
+    "openai": "7.59.0",
+    "typebox": "1.4.3",
+    "undici": "7.30.2"
   },
   "devDependencies": {
     "@types/bun": "1.4.4",

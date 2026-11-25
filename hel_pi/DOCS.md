@@ -1,6 +1,6 @@
 # Hel-Pi
 
-Hel-Pi keeps one conversation for one household. Every Home Assistant administrator who opens Hel-Pi, and every signed-in direct client, sees the same messages and attachments and can use the connected ChatGPT plan. Only use it with people you trust with that account's allowance. It cannot control devices or run shell commands.
+Hel-Pi keeps one conversation for one household. Every Home Assistant administrator who opens Hel-Pi, and every signed-in direct client, sees the same messages and attachments and can use the connected ChatGPT plan and any enabled tools. Only give access to people you trust with those permissions. By default, the assistant can only read chat attachments. It has no shell tool.
 
 ## Install from GitHub
 
@@ -20,6 +20,26 @@ For a local install instead, copy the whole `hel_pi` directory to the `local_app
 
 Chat history and uploads are stored locally. Message context and files the model reads are sent to OpenAI for inference. Attach up to four files per message, at most 8 MiB each. The model can read text and supported images, not arbitrary documents or files on the host.
 
+## Enable web tools (optional)
+
+In **Hel-Pi → Configuration**, show optional settings, choose a **Web search provider**, save, and restart:
+
+- **chatgpt** uses the connected account and currently selected model. Each search makes a separate request against your plan. [OpenAI limits hosted web search by model and account or workspace policy](https://developers.openai.com/siwc/token-sharing-open-source/preview-limitations). If OpenAI rejects a search, ordinary chat still works. Hel-Pi does not switch to a paid API key or Brave automatically.
+- **brave** sends the search query to Brave. Set **Brave Search API key** to a key from your [Brave Search API account](https://brave.com/search/api/). Brave usage is separate from ChatGPT usage.
+- **Read public web pages** is independent of search and needs no API key. Hel-Pi fetches the page from your network and sends its text to the model. It accepts public IPv4 sites on standard HTTPS, checks redirects, and reads at most 1 MiB of HTML or plain text. It does not use cookies, run scripts, or open private addresses.
+
+Try “Search for the latest Home Assistant release and cite the source” or, with page reading on, “Summarize https://www.home-assistant.io/blog/”. Search providers receive model-generated queries, which can contain chat context. Web pages and search results are untrusted; keep permissions narrow if MCP is also enabled.
+
+## Connect the Home Assistant MCP server (optional)
+
+Hel-Pi connects to **one** trusted Streamable HTTP MCP endpoint. The model cannot set the endpoint or its credentials. No hosted OpenAI connector, public tunnel, or Supervisor API access is needed.
+
+1. Enable the [Model Context Protocol **Server** integration](https://www.home-assistant.io/integrations/mcp_server/) in Home Assistant. Limit the tools and entities you expose; use read-only mode if your version offers it. Create a long-lived access token under the chosen HA user's **Profile → Security**. Prefer a dedicated, non-admin user and grant only the endpoint access it needs.
+2. In **Hel-Pi → Configuration**, enter the **MCP server URL** and **MCP bearer token**. Use Core's internal port: `http://homeassistant/api/mcp` on port 80, or `http://homeassistant:8123/api/mcp` on port 8123. If Core uses TLS, use its trusted HTTPS URL instead. The main endpoint can require an admin by default; configure it for the dedicated user and selected tools, or use a narrower endpoint supported by your HA version.
+3. Leave **Permitted MCP tools** empty, save, restart, and ask “List the tools my Home Assistant MCP server offers.” This can discover names but cannot call any of them. To read exposed entity states, add the exact name the server lists (for example, `homeassistant__GetLiveContext`), save, restart, and ask about a specific exposed light. Add other names separated by commas only if needed.
+
+Anyone who can use this chat can call the tools you permit, with the token owner's authority. MCP tool output (including entity names and state) goes to the model. There is no per-call approval screen. Leave control tools off unless you accept that risk. Remove the URL and restart to disable MCP; revoke the token in Home Assistant if you no longer need it. Hel-Pi does not run local MCP commands or perform OAuth for MCP servers.
+
 ## Enable private Tailscale access (optional)
 
 Home Assistant ingress continues to work at your usual Home Assistant address without Tailscale. This app does not make Home Assistant remotely reachable. Remote ingress still needs a route you already use, such as Home Assistant Cloud. **Only the separate Hel-Pi address needs the Tailscale client connected.**
@@ -35,6 +55,6 @@ To invalidate direct sessions, change the key and restart. To disable Tailscale,
 
 In **Settings → System → Backups**, include **Hel-Pi** in the backup, and check that your automatic backup includes new apps. For local installations, also keep the installation ZIP or back up the local apps source folder. Store an encrypted backup off the Home Assistant device and keep the backup emergency kit separately.
 
-Supervisor briefly stops Hel-Pi for a consistent backup, then restarts it if it was running. Back up between replies. The app's `/data/piko` holds its chat database, files, model settings, OpenAI refresh credentials and, when enabled, the Tailscale device identity. The backup also contains app options, including the direct access key. Treat it like a password vault.
+Supervisor briefly stops Hel-Pi for a consistent backup, then restarts it if it was running. Back up between replies. The app's `/data/piko` holds its chat database, files, model settings, OpenAI refresh credentials and, when enabled, the Tailscale device identity. The backup also contains app options, including any direct access key, Brave key, and MCP token. Treat it like a password vault.
 
 Restore Hel-Pi from the backup to the **same app identity** (the same repository, or the same local app). Start it and check an old message and attachment. Do not run a restored copy and the original at the same time: they share a Tailscale identity and OpenAI refresh token. If a restored grant is no longer valid, reconnect in **Account**; this does not clear history. Do not uninstall the app to troubleshoot: uninstalling can delete its data.

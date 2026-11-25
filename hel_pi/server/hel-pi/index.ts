@@ -14,7 +14,7 @@ const key: string | undefined = options.direct_access_key?.trim();
 if (key && key.length < 32) throw new Error('Use a direct access key of at least 32 characters, or leave it blank.');
 const paths = initializeWorkspace(workspacePaths(home));
 await clearRuntimeTemp(paths.state);
-const runtime = await openChat(paths);
+const runtime = await openChat(paths, options);
 const handle = await createHandler(paths, runtime, key);
 const limits = { development: false, maxRequestBodySize: MAX_ATTACHMENT_BYTES };
 const ingress = Bun.serve({ ...limits, hostname: '0.0.0.0', port: 8099, idleTimeout: 120,

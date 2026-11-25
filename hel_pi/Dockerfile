@@ -1,16 +1,15 @@
 FROM tailscale/tailscale:v1.104.7 AS tailscale
 FROM oven/bun:1.4.4
-WORKDIR /opt/hel-pi/piko
-COPY piko/package.json piko/bun.lock ./
+WORKDIR /opt/hel-pi
+COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile --production && bun pm cache rm
 COPY --from=tailscale /usr/local/bin/tailscale /usr/local/bin/tailscaled /usr/local/bin/containerboot /usr/local/bin/
-COPY serve.json ../serve.json
-COPY piko/server ./server
-COPY piko/shared ./shared
-COPY piko/LICENSE ./LICENSE
-COPY web ../web
+COPY serve.json LICENSE ./
+COPY server ./server
+COPY shared ./shared
+COPY web ./web
 # A local app may arrive over Samba or be extracted with umask 077.
 # Make packaged source readable by bun without giving it ownership or touching /data.
-RUN chmod -R a+rX server shared ../web && chmod a+r package.json ../serve.json
+RUN chmod -R a+rX server shared web && chmod a+r package.json serve.json LICENSE
 COPY run.sh /usr/local/bin/start-hel-pi
 ENTRYPOINT ["/bin/sh", "/usr/local/bin/start-hel-pi"]
